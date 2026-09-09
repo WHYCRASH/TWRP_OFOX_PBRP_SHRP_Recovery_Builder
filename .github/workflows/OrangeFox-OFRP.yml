@@ -6,9 +6,10 @@ on:
       MANIFEST_BRANCH:
         description: 'OrangeFox Manifest Branch'
         required: true
-        default: '12.1'
+        default: '14.1'
         type: choice
         options:
+        - 14.1
         - 12.1
         - 11.0
       DEVICE_TREE:
@@ -81,6 +82,13 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         max-size: "10G"
+    - name: Install JDK 17 (required for fox_14.1 / Android 14 builds)
+      if: inputs.MANIFEST_BRANCH == '14.1'
+      uses: actions/setup-java@v5
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
       
     - name: Set-up Manifest # For github workspace use single {}
       run: |
@@ -102,9 +110,11 @@ jobs:
     - name: Building OrangeFox
       run: |
         pushd ${{ env.ORANGEFOX_ROOT }}
+        export JAVA_HOME=${{ env.JAVA_HOME_17_X64 }}
         set +e
         export USE_CCACHE=1
         export CCACHE_EXEC=/usr/bin/ccache
+        java -version
         sed -i 's/return sandboxConfig\.working/return false/g' build/soong/ui/build/sandbox_linux.go
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
